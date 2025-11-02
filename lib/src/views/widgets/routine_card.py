@@ -26,25 +26,35 @@ class RoutineCard(ft.Container):
         super().__init__(
             on_hover=self._animation,
             on_click=self._onclick,
-            content=ft.Card(
-                animate_scale=ft.Animation(duration=300, curve=ft.AnimationCurve.EASE_IN_OUT_QUAD),
-                elevation=5,
-                shadow_color="#272727",
-                content=ft.Container(
-                    content=ft.Column(
-                        controls=[
-                            ft.Icon(name=routine.category.icon, size=20),
-                            ft.Text(
-                                routine.routine_name,
-                                style=ft.TextThemeStyle.BODY_MEDIUM,
-                                text_align=ft.TextAlign.CENTER,
-                                )
-                        ],
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        spacing=10,
+            expand=True,
+            alignment=ft.alignment.center,
+            content=
+            ft.Stack(
+                expand=True,
+                controls=[
+                    ft.Card(
+                        animate_scale=ft.Animation(duration=300, curve=ft.AnimationCurve.EASE_IN_OUT_QUAD),
+                        elevation=5,
+                        width=150,
+                        shadow_color="#272727",
+                        content=ft.Container(
+                            on_click=self._onclick,
+                            content=ft.Column(
+                                controls=[
+                                    ft.Icon(name=routine.category.icon, size=20),
+                                    ft.Text(
+                                        routine.routine_name,
+                                        style=ft.TextThemeStyle.BODY_MEDIUM,
+                                        text_align=ft.TextAlign.CENTER,
+                                        )
+                                ],
+                                alignment=ft.MainAxisAlignment.CENTER,
+                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                spacing=10,
+                            ),
+                            padding=ft.padding.all(10),
+                        )
                     ),
-                    padding=ft.padding.all(10),
-                )
-            ) 
+                ]
+            )
         )

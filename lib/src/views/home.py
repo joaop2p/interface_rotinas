@@ -23,11 +23,13 @@ class HomeView(ViewTemplate):
     _terminal_ref: ft.Ref[ft.Container]
     _main_content_ref: ft.Ref[ft.Container]
     _monitor_logs_task: asyncio.Task | None
+    _logger: logging.Logger
 
     def __init__(self, ):
         self._page = None
         self._current_filter = None
         self._config = Config()
+        self._logger = logging.getLogger("HomeView")
         self._load_task = None
         self._routines = []
         self._categories = []
@@ -54,15 +56,15 @@ class HomeView(ViewTemplate):
         try:
             category_controller = CategoryController()
             category_controller.delete_category(category)
-            logging.info(f"Categoria deletada: {category.category_name} (ID: {category.category_id})")
-            self._update_terminal(f"Categoria deletada: {category.category_name} (ID: {category.category_id})")
+            self._logger.info(f"Categoria deletada: {category.category_name} (ID: {category.category_id})")
+            # self._update_terminal(f"Categoria deletada: {category.category_name} (ID: {category.category_id})")
             self._page.run_task(self._switch_to_main_content)
         except CategoryInUseError as e:
-            logging.warning("Tentativa de deletar categoria em uso: %s", e)
+            self._logger.warning("Tentativa de deletar categoria em uso: %s", e)
             self._update_terminal(f"Erro ao deletar categoria: {e}")
         except Exception as e:
-            logging.exception("Erro ao deletar categoria: %s", e)
-            self._update_terminal(f"Erro ao deletar categoria: {e}")
+            self._logger.exception("Erro ao deletar categoria: %s", e)
+            # self._update_terminal(f"Erro ao deletar categoria: {e}")
 
     async def _monitor_logs(self):
         last_length = 0
@@ -98,16 +100,16 @@ class HomeView(ViewTemplate):
         try:
             category_controller = CategoryController()
             self._categories = category_controller.get_all_categories()
-            logging.info(f"Categorias carregadas: %d", len(self._categories))
+            self._logger.info(f"Categorias carregadas: %d", len(self._categories))
         except Exception as e:
-            logging.exception("Erro ao carregar categorias: %s", e)
+            self._logger.exception("Erro ao carregar categorias: %s", e)
             self._update_terminal(f"Erro ao carregar categorias: {e}")
         try:
             routines_controller = RoutinesController()
             self._routines = routines_controller.get_all_routines()
-            logging.info(f"Rotinas carregadas: %d", len(self._routines))
+            self._logger.info(f"Rotinas carregadas: %d", len(self._routines))
         except Exception as e:
-            logging.exception("Erro ao carregar rotinas: %s", e)
+            self._logger.exception("Erro ao carregar rotinas: %s", e)
             self._routines = []
             self._update_terminal(f"Erro ao carregar rotinas: {e}")
 
@@ -189,6 +191,11 @@ class HomeView(ViewTemplate):
                                                 icon=ft.Icons.PLAYLIST_ADD,
                                                 on_click=lambda e: self._go_to("/add_routine")
                                             ),
+                                            ft.PopupMenuItem(
+                                                text="Detalhes das Rotinas",
+                                                icon=ft.Icons.INFO,
+                                                on_click=lambda e: self._go_to("/routine_details")
+                                            )
                                         ]
                                     )
                                 ]

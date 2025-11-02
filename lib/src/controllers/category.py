@@ -1,10 +1,6 @@
 from typing import Sequence
 from lib.src.models.db.models import Category
-from lib.src.services.category import CategoryService
-
-class CategoryInUseError(RuntimeError):
-    """Categoria possui rotinas associadas."""
-    pass
+from lib.src.services.category import CategoryService, CategoryInUseError
 
 class CategoryController:
     def __init__(self) -> None:
@@ -18,8 +14,4 @@ class CategoryController:
         return self.category_service.insert_category(new_category)
     
     def delete_category(self, category: Category) -> None:
-        from .routines import RoutinesController
-        temp_routines_controller = RoutinesController()
-        if temp_routines_controller.get_by_category_id(category.category_id):
-            raise CategoryInUseError("Não é possível deletar uma categoria que possui rotinas associadas.")
         self.category_service.delete_category(category)

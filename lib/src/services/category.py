@@ -1,6 +1,12 @@
 from typing import Sequence
+from sqlalchemy.exc import IntegrityError
 from lib.src.dao.category import CategoryDAO
 from lib.src.models.db.models import Category
+
+
+class CategoryInUseError(RuntimeError):
+    """Categoria possui rotinas associadas."""
+    pass
 
 
 class CategoryService:
@@ -14,4 +20,8 @@ class CategoryService:
         return self.category_dao.insert_category(category)
     
     def delete_category(self, category: Category) -> None:
-        self.category_dao.delete_category(category)
+        try:
+            self.category_dao.delete_category(category)
+        except IntegrityError as e:
+            # Requer FK com ON DELETE RESTRICT/NO ACTION habilitado (PRAGMA foreign_keys=ON)
+            raise CategoryInUseError("Não é possível deletar uma categoria que possui rotinas associadas.") from e

@@ -1,7 +1,8 @@
 import logging
 from os import getenv, makedirs
-from sqlalchemy import Engine, create_engine
-from sqlmodel import SQLModel
+from sqlalchemy import Engine, create_engine, event
+from contextlib import contextmanager
+from sqlmodel import SQLModel, Session
 from . import CONFIG_CONSTANTS, LOG_CONSTANTS as LOG
 from typing import Self, Any
 from ..src.models.db.models import *
@@ -63,6 +64,15 @@ class DatabaseConfig:
                 )
 
             self.engine: Engine = create_engine(url, **engine_kwargs)
+
+            # Habilita FK no SQLite
+            if is_sqlite:
+                @event.listens_for(self.engine, "connect")
+                def _set_sqlite_pragma(dbapi_connection, connection_record):
+                    cursor = dbapi_connection.cursor()
+                    cursor.execute("PRAGMA foreign_keys=ON")
+                    cursor.close()
+
             SQLModel.metadata.create_all(self.engine)
             self.logger.info(LOG.DB_CONNECTED)
             self.__class__._initialized = True
@@ -83,5 +93,4 @@ class DatabaseConfig:
     
     @property
     def get_engine(self) -> Engine:
-        """Retorna o engine do banco de dados."""
         return self.engine

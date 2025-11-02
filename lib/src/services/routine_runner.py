@@ -20,6 +20,9 @@ class RoutineRunner:
         """
         Executa um script Python em um novo processo e captura a saída em tempo real.
         """
+
+        if not os.path.isfile(script_path):
+            raise FileNotFoundError(f"Script não encontrado: {script_path}")
         if args is None:
             args = []
 

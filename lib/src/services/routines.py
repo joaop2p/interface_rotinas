@@ -10,6 +10,9 @@ class RoutinesService:
     def get_all_routines(self) -> Sequence[Routine]:
         return self.dao.get_all_routines()
     
+    def get_by_category_id(self, category_id: int) -> Sequence[Routine]:
+        return self.dao.get_by_category_id(category_id)
+    
     def insert_routine(self, routine: Routine) -> Routine:
         return self.dao.insert_routine(routine)
     

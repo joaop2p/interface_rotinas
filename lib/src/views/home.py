@@ -3,7 +3,7 @@ import logging
 from typing import Iterable
 from lib.config import Config, ConfigDefaults
 from lib.src.controllers.routines import RoutinesController
-from lib.src.controllers.category import CategoryController
+from lib.src.controllers.category import CategoryController, CategoryInUseError
 from lib.src.models.db.models import Category, Routine
 from lib.src.models.interfaces.view_template import ViewTemplate
 import flet as ft
@@ -50,7 +50,6 @@ class HomeView(ViewTemplate):
         lv.controls.append(ft.Text(log, style=ft.TextThemeStyle.LABEL_MEDIUM, selectable=True, color="#FFFFFF"))
         self._terminal_reference.current.update()
 
-
     def _on_delete_category(self, category: Category) -> None:
         try:
             category_controller = CategoryController()
@@ -58,6 +57,9 @@ class HomeView(ViewTemplate):
             logging.info(f"Categoria deletada: {category.category_name} (ID: {category.category_id})")
             self._update_terminal(f"Categoria deletada: {category.category_name} (ID: {category.category_id})")
             self._page.run_task(self._switch_to_main_content)
+        except CategoryInUseError as e:
+            logging.warning("Tentativa de deletar categoria em uso: %s", e)
+            self._update_terminal(f"Erro ao deletar categoria: {e}")
         except Exception as e:
             logging.exception("Erro ao deletar categoria: %s", e)
             self._update_terminal(f"Erro ao deletar categoria: {e}")

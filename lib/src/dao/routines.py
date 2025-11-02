@@ -13,6 +13,12 @@ class RoutinesDAO:
             statement = select(Routine).options(joinedload(cast(Any, Routine.category)))
             result = session.exec(statement)
             return result.all()
+        
+    def get_by_category_id(self, category_id: int) -> Sequence[Routine]:
+        with Session(self._db_config.get_engine) as session:
+            statement = select(Routine).where(Routine.category_id == category_id).options(joinedload(cast(Any, Routine.category)))
+            result = session.exec(statement)
+            return result.all()
 
     def insert_routine(self, routine: Routine) -> Routine:
         with Session(self._db_config.get_engine) as session:

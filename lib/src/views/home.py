@@ -22,6 +22,7 @@ class HomeView(ViewTemplate):
     _list_label_ref: ft.Ref[ft.Container]
     _terminal_ref: ft.Ref[ft.Container]
     _main_content_ref: ft.Ref[ft.Container]
+    _monitor_logs_task: asyncio.Task | None
 
     def __init__(self, ):
         self._page = None
@@ -31,6 +32,7 @@ class HomeView(ViewTemplate):
         self._routines = []
         self._categories = []
         self._start_references()
+        self._monitor_logs_task = None
         
     
     def _start_references(self) -> None:
@@ -120,6 +122,7 @@ class HomeView(ViewTemplate):
             controls=[
                 CategoryLabels(
                     category=category,
+                    on_click=lambda e, c=category: self._filter_routines_by_category(c.category_id),
                     width=100,
                     col={"xs": 6, "md": 4, "lg": 2},
                     on_delete=lambda e, c=category: self._on_delete_category(c),
@@ -145,6 +148,12 @@ class HomeView(ViewTemplate):
         self._list_label_references.current.update()
         self._main_content_ref.current.update()
 
+    def _go_to(self, route: str) -> None:
+        if self._monitor_logs_task is not None:
+            self._monitor_logs_task.cancel()
+        if self._page is not None:
+            self._page.go(route)
+
     def set_page(self, page: ft.Page) -> None:
         self._page = page
 
@@ -153,7 +162,7 @@ class HomeView(ViewTemplate):
             raise ValueError("Page is not set for HomeView.")
         self._page.run_task(self._switch_to_main_content)
         self._page.pubsub.subscribe(lambda m: self._update_terminal(m["text"]) if m.get("type")=="log" else None)
-        self._page.run_task(self._monitor_logs)
+        self._monitor_logs_task = self._page.run_task(self._monitor_logs)
         home_view = ft.View(
             route="/home",
             controls=[
@@ -171,12 +180,12 @@ class HomeView(ViewTemplate):
                                             ft.PopupMenuItem(
                                                 text="Adicionar Categoria",
                                                 icon=ft.Icons.NEW_LABEL,
-                                                on_click=lambda e: self._page.go("/add_category")
+                                                on_click=lambda e: self._go_to("/add_category")
                                             ),
                                             ft.PopupMenuItem(
                                                 text="Adicionar Rotina",
                                                 icon=ft.Icons.PLAYLIST_ADD,
-                                                on_click=lambda e: self._page.go("/routines/new")
+                                                on_click=lambda e: self._go_to("/add_routine")
                                             ),
                                         ]
                                     )

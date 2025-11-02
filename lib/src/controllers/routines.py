@@ -9,3 +9,12 @@ class RoutinesController:
 
     def get_all_routines(self) -> Sequence[Routine]:
         return self.service.get_all_routines()
+
+    def insert_routine(self, name: str, path: str, desc: str, category_id: int) -> Routine:
+        routine = Routine(
+            routine_name=name,
+            directory_path=path,
+            description=desc,
+            category_id=category_id
+        )
+        return self.service.insert_routine(routine)

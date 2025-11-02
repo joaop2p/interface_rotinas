@@ -9,3 +9,9 @@ class RoutinesService:
 
     def get_all_routines(self) -> Sequence[Routine]:
         return self.dao.get_all_routines()
+    
+    def insert_routine(self, routine: Routine) -> Routine:
+        return self.dao.insert_routine(routine)
+    
+    def delete_routine(self, routine: Routine) -> None:
+        self.dao.delete_routine(routine)

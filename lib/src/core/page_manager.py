@@ -2,7 +2,7 @@ from typing import Callable, Self
 from flet import Page, RouteChangeEvent
 from lib.src.core.routes import Routes
 from lib.src.models.interfaces.view_template import ViewTemplate
-from lib.src.views import HomeView, AddCategoriesView
+from lib.src.views import HomeView, AddCategoriesView, AddRoutinesView
 
 class PageManager:
     _current_page: ViewTemplate | None
@@ -11,6 +11,7 @@ class PageManager:
     _routes: dict[str, ViewTemplate | Callable[[], ViewTemplate]] = {
         Routes.HOME: HomeView(),
         Routes.CATEGORIES_NEW: AddCategoriesView,
+        Routes.ROUTINES_NEW: AddRoutinesView,
     }
 
     def __init__(self):

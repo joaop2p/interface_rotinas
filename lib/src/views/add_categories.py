@@ -29,7 +29,6 @@ class AddCategoriesView(ViewTemplate):
 
     def _validate_inputs(self) -> bool:
         name_field = self._text_field_ref.current
-        selected_icon = self._selected_icon_text_ref.current
         if name_field is None or not name_field.value.strip():
             if name_field is not None:
                 name_field.error_text = "O nome da categoria não pode estar vazio."

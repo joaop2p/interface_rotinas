@@ -1,16 +1,23 @@
 from os import getenv, getlogin
 from dotenv import load_dotenv
 
-load_dotenv()  # Carrega variáveis de ambiente do arquivo .env
+load_dotenv()
 
 class ConfigDefaults:
+    # Constantes padrão de configuração
     APP_NAME: str = "Interface Rotinas"
     VERSION: str = "1.0.0"
     DEBUG: bool = True
+    # Caminhos/URLs
     DATABASE_PATH: str = getenv("DATABASE_URL")
     ALTERNATIVE_PATH: str = rf'C:\users\{getlogin()}\{APP_NAME}'
+    DEFAULT_DIR = rf'C:\users\{getlogin()}\documents'
+    # Terminal log settings
     TERMINAL_LIMIT = 100
     TERMINAL_UPDATE_INTERVAL = 0.1
+    # Seletor de arquivos
+    EXTENSION_SUPPORTED = ["py", "pyc", "pyo", "pyd", "pyw", "pyz"]
+    WINDOW_TITLE: str = f"Selecione um arquivo python"
 
 class LogMessages:
     """Repositório centralizado de mensagens de LOG."""

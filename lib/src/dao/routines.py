@@ -13,3 +13,15 @@ class RoutinesDAO:
             statement = select(Routine).options(joinedload(cast(Any, Routine.category)))
             result = session.exec(statement)
             return result.all()
+
+    def insert_routine(self, routine: Routine) -> Routine:
+        with Session(self._db_config.get_engine) as session:
+            session.add(routine)
+            session.commit()
+            session.refresh(routine)
+            return routine
+        
+    def delete_routine(self, routine: Routine) -> None:
+        with Session(self._db_config.get_engine) as session:
+            session.delete(routine)
+            session.commit()

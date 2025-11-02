@@ -6,7 +6,7 @@ class Category(SQLModel, table=True):
     __tablename__ = "tb_categories"  # type: ignore
 
     category_id: int = Field(default=None, primary_key=True)
-    category_name: str
+    category_name: str = Field(unique=True, nullable=False)
     icon: str
     routines: List["Routine"] = Relationship(back_populates="category")
 

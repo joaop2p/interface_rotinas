@@ -12,10 +12,11 @@ class CategoryLabels(Container):
     def set_selected(self, selected: bool) -> None:
         if self.content is None or not isinstance(self.content, Row):
             return
-        elif self.content.controls[1] is None or not isinstance(self.content.controls[1], Text):
+        control = self.content.controls[0].content.controls[1]
+        if control is None or not isinstance(control, Text):
             return
-        self.content.controls[1].style = TextStyle(weight=FontWeight.BOLD if selected else FontWeight.NORMAL)
-        self.content.controls[1].update()
+        control.style = TextStyle(weight=FontWeight.BOLD if selected else FontWeight.NORMAL)
+        control.update()
 
 
     def __init__(self, category: Category, on_delete: callable = None, **kwargs):

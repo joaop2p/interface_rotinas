@@ -1,4 +1,4 @@
-from os import getenv
+from os import getenv, getlogin
 from dotenv import load_dotenv
 
 load_dotenv()  # Carrega variáveis de ambiente do arquivo .env
@@ -7,7 +7,10 @@ class ConfigDefaults:
     APP_NAME: str = "Interface Rotinas"
     VERSION: str = "1.0.0"
     DEBUG: bool = True
-    DATABASE_URL: str = getenv("DATABASE_URL", "routines.sqlite")
+    DATABASE_PATH: str = getenv("DATABASE_URL")
+    ALTERNATIVE_PATH: str = rf'C:\users\{getlogin()}\{APP_NAME}'
+    TERMINAL_LIMIT = 100
+    TERMINAL_UPDATE_INTERVAL = 0.1
 
 class LogMessages:
     """Repositório centralizado de mensagens de LOG."""

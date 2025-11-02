@@ -4,14 +4,12 @@ from sqlmodel import Session, select
 from sqlalchemy.orm import joinedload
 from lib.src.models.db.models import Routine
 
-class RoutinesDAO(DatabaseConfig):
+class RoutinesDAO:
     def __init__(self) -> None:
-        super().__init__()
+        self._db_config = DatabaseConfig.get_instance()
     
     def get_all_routines(self) -> Sequence[Routine]:
-        with Session(self.engine) as session:
-            # Carrega a categoria junto para permitir acesso a routine.category.icon fora da sessão
-            # Cast para Any para satisfazer o type checker (Pylance/SQLAlchemy typings)
+        with Session(self._db_config.get_engine) as session:
             statement = select(Routine).options(joinedload(cast(Any, Routine.category)))
             result = session.exec(statement)
             return result.all()

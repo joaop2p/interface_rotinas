@@ -9,3 +9,9 @@ class CategoryService:
 
     def get_all_categories(self) -> Sequence[Category]:
         return self.category_dao.get_all_categories()
+    
+    def insert_category(self, category: Category) -> Category:
+        return self.category_dao.insert_category(category)
+    
+    def delete_category(self, category: Category) -> None:
+        self.category_dao.delete_category(category)

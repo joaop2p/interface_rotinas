@@ -39,7 +39,6 @@ class Config:
 
         root = logging.getLogger()
         root.setLevel(logging.INFO)
-        # Evita handlers duplicados
         existing = {type(h) for h in root.handlers}
         if InMemoryLogHandler not in existing:
             root.addHandler(self.log_capture)

@@ -1,9 +1,10 @@
 import logging
-from os import getenv
+from os import getenv, makedirs
 from sqlalchemy import Engine, create_engine
 from sqlmodel import SQLModel
 from . import CONFIG_CONSTANTS, LOG_CONSTANTS as LOG
 from typing import Self, Any
+from ..src.models.db.models import *
 
 class DatabaseConfig:
     _instance = None
@@ -17,14 +18,21 @@ class DatabaseConfig:
         - Para bancos não-SQLite, permite configurar pool_size, max_overflow e pool_recycle via env vars.
         - Cria o schema (SQLModel.metadata.create_all) na primeira inicialização.
         """
-        url = f"sqlite:///{CONFIG_CONSTANTS.DATABASE_URL}"
         if self.__class__._initialized:
             return
-        print("Database URL:", url)
+        
         self.logger = logging.getLogger("DatabaseConfig")
+        self.logger.debug("Inicializando DatabaseConfig...")
+        
+        if CONFIG_CONSTANTS.DATABASE_PATH is None:
+            path = CONFIG_CONSTANTS.ALTERNATIVE_PATH
+            makedirs(path, exist_ok=True)
+            path = f"{path}/routines.sqlite"
+        else:
+            path = CONFIG_CONSTANTS.DATABASE_PATH
+        url = f"sqlite:///{path}"
         try:
-            self.logger.info(LOG.DB_CONNECTING, {"db_path": CONFIG_CONSTANTS.DATABASE_URL})
-
+            self.logger.debug(LOG.DB_CONNECTING, {"db_path": url})
             is_sqlite = url.startswith("sqlite:")
             engine_kwargs: dict[str, Any] = {
                 "echo": echo or (getenv("DB_ECHO", "false").lower() == "true"),
@@ -55,7 +63,6 @@ class DatabaseConfig:
                 )
 
             self.engine: Engine = create_engine(url, **engine_kwargs)
-
             SQLModel.metadata.create_all(self.engine)
             self.logger.info(LOG.DB_CONNECTED)
             self.__class__._initialized = True
@@ -67,3 +74,14 @@ class DatabaseConfig:
         if cls._instance is None:
             cls._instance = super(DatabaseConfig, cls).__new__(cls)
         return cls._instance
+    
+    @classmethod
+    def get_instance(cls, echo: bool = False) -> Self:
+        if cls._instance is None:
+            cls._instance = cls(echo=echo)
+        return cls._instance
+    
+    @property
+    def get_engine(self) -> Engine:
+        """Retorna o engine do banco de dados."""
+        return self.engine

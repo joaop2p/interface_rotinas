@@ -1,4 +1,4 @@
-from flet import Container, Icon, Row, Text, Animation, AnimationCurve, ControlEvent, FontWeight, TextStyle
+from flet import Container, Icon, Row, Text, Animation, AnimationCurve, ControlEvent, FontWeight, TextStyle, Icons, MainAxisAlignment
 from lib.src.models.db.models import Category
 from lib.src.views.widgets.message_box import MessageBox
 
@@ -18,17 +18,28 @@ class CategoryLabels(Container):
         self.content.controls[1].update()
 
 
-
-    def __init__(self, category: Category, **kwargs):
+    def __init__(self, category: Category, on_delete: callable = None, **kwargs):
         super().__init__(**kwargs)
         self.category = category
-        # self.bgcolor = "#E0E0E0"
-        # self.expand = True
         self.animate_scale = Animation(duration=300, curve=AnimationCurve.EASE_IN_OUT_QUAD)
         self.on_hover = self._animation
         self.content = Row(
+            alignment=MainAxisAlignment.CENTER,
+            spacing=15,
             controls=[
-                Icon(name=category.icon),
-                Text(category.category_name),
+                Container(
+                    content=Row(
+                        controls=[
+                            Icon(name=category.icon, size=20),
+                            Text(category.category_name, style=TextStyle(size=14)),
+                        ],
+                        alignment="center",
+                        spacing=8,
+                    )
+                ),
+                Container(
+                    on_click=on_delete,
+                    content=Icon(name=Icons.CANCEL, size=16)
+                ),
             ]
         )

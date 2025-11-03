@@ -237,8 +237,5 @@ class HomeView(ViewTemplate):
                     )
                 )
             ],
-            # appbar=ft.AppBar(
-            #     title=ft.Text(self._title)
-            #     ),
         )
         return home_view

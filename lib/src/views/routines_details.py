@@ -22,7 +22,7 @@ class RoutinesDetailsView(ViewTemplate):
             self._logger.info(f"Categorias carregadas: %d", len(self._categories))
         except Exception as e:
             self._logger.exception("Erro ao carregar categorias: %s", e)
-            self._update_terminal(f"Erro ao carregar categorias: {e}")
+            # self._update_terminal(f"Erro ao carregar categorias: {e}")
         try:
             routines_controller = RoutinesController()
             self._routines = routines_controller.get_all_routines()
@@ -30,7 +30,7 @@ class RoutinesDetailsView(ViewTemplate):
         except Exception as e:
             self._logger.exception("Erro ao carregar rotinas: %s", e)
             self._routines = []
-            self._update_terminal(f"Erro ao carregar rotinas: {e}")
+            # self._update_terminal(f"Erro ao carregar rotinas: {e}")
 
     async def _switch_to_main_content(self):
         await self._load_data_async()
@@ -49,7 +49,13 @@ class RoutinesDetailsView(ViewTemplate):
         self._page.run_task(self._switch_to_main_content)
         return ft.View(
             route=self._route,
-            appbar=ft.AppBar(title=ft.Text(self._title)),
+            appbar=ft.AppBar(
+                title=ft.Text(self._title),
+                leading=ft.IconButton(
+                    icon=ft.Icons.ARROW_BACK,
+                    on_click=lambda _: self._page.go("/home")
+                )
+            ),
             controls=[
                 ft.Container(
                     ref=self._main_content_ref,

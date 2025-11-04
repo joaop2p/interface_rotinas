@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import concurrent.futures
 from typing import Iterable
 from lib.config import Config, ConfigDefaults
 from lib.src.controllers.routines import RoutinesController
@@ -9,7 +10,6 @@ from lib.src.models.interfaces.view_template import ViewTemplate
 import flet as ft
 from lib.src.views.widgets.category_labels import CategoryLabels
 from lib.src.views.widgets.routines_grid import RoutineCard, RoutinesGrid
-
 class HomeView(ViewTemplate):
     _title = "Menu Inicial"
     _route = "/home"
@@ -22,7 +22,7 @@ class HomeView(ViewTemplate):
     _list_label_ref: ft.Ref[ft.Container]
     _terminal_ref: ft.Ref[ft.Container]
     _main_content_ref: ft.Ref[ft.Container]
-    _monitor_logs_task: asyncio.Task | None
+    _monitor_logs_task: concurrent.futures.Future[None] | None
     _logger: logging.Logger
 
     def __init__(self, ):
@@ -46,26 +46,37 @@ class HomeView(ViewTemplate):
         lv = self._terminal_reference.current.content
         if lv is None or not isinstance(lv, ft.ListView):
             return
-        if len(lv.controls) >= ConfigDefaults.TERMINAL_LIMIT:
-            lv.controls.pop(0)
-        lv.controls.append(ft.Text(log, style=ft.TextThemeStyle.LABEL_MEDIUM, selectable=True, color="#FFFFFF"))
-        self._terminal_reference.current.update()
+        if log.startswith("\r"):
+            log = log.lstrip("\r")
+            if lv.controls and isinstance(lv.controls[-1], ft.Text):
+                lv.controls[-1].value = log
+            else:
+                lv.controls.append(
+                    ft.Text(
+                        log, 
+                        style=ft.TextThemeStyle.LABEL_MEDIUM, 
+                        selectable=True, 
+                        color="#FFFFFF"
+                    )
+                )
+        else:
+            if len(lv.controls) >= ConfigDefaults.TERMINAL_LIMIT:
+                lv.controls.pop(0)
+            lv.controls.append(ft.Text(log, style=ft.TextThemeStyle.LABEL_MEDIUM, selectable=True, color="#FFFFFF"))
+        lv.update()
 
     def _on_delete_category(self, category: Category) -> None:
         try:
             category_controller = CategoryController()
             category_controller.delete_category(category)
             self._logger.info(f"Categoria deletada: {category.category_name} (ID: {category.category_id})")
-            # self._update_terminal(f"Categoria deletada: {category.category_name} (ID: {category.category_id})")
             self._page.run_task(self._switch_to_main_content)
         except CategoryInUseError as e:
             self._logger.warning("Tentativa de deletar categoria em uso: %s", e)
             self._update_terminal(f"Erro ao deletar categoria: {e}")
         except Exception as e:
             self._logger.exception("Erro ao deletar categoria: %s", e)
-            # self._update_terminal(f"Erro ao deletar categoria: {e}")
-
-    async def _monitor_logs(self):
+    async def _monitor_logs(self) -> None:
         last_length = 0
         while True:
             await asyncio.sleep(ConfigDefaults.TERMINAL_UPDATE_INTERVAL)
@@ -73,9 +84,13 @@ class HomeView(ViewTemplate):
                 last_length = len(self._config.log_capture.logs)
                 log = self._config.log_capture.get_log()
                 self._update_terminal(log)
+                self._update_terminal(log)
 
     def _mark_label_as_selected(self, category_id: int) -> None:
-        for label in self._list_label_references.current.content.controls:
+        list_container = self._list_label_references.current.content
+        if not isinstance(list_container, ft.ResponsiveRow):
+            return
+        for label in list_container.controls:
             if isinstance(label, CategoryLabels):
                 label.set_selected(label.category.category_id == category_id and self._current_filter != category_id)
 

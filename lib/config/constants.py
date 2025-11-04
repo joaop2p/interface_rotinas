@@ -9,12 +9,12 @@ class ConfigDefaults:
     VERSION: str = "1.0.0"
     DEBUG: bool = True
     # Caminhos/URLs
-    DATABASE_PATH: str = getenv("DATABASE_URL")
+    DATABASE_PATH: str | None = getenv("DATABASE_URL")
     ALTERNATIVE_PATH: str = rf'C:\users\{getlogin()}\{APP_NAME}'
     DEFAULT_DIR = rf'C:\users\{getlogin()}\documents'
     # Terminal log settings
     TERMINAL_LIMIT = 100
-    TERMINAL_UPDATE_INTERVAL = 0.1
+    TERMINAL_UPDATE_INTERVAL = 1
     # Seletor de arquivos
     EXTENSION_SUPPORTED = ["py", "pyc", "pyo", "pyd", "pyw", "pyz"]
     WINDOW_TITLE: str = f"Selecione um arquivo python"

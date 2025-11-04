@@ -18,6 +18,6 @@ class Routine(SQLModel, table=True):
     directory_path: str
     description: Optional[str] = None
     category_id: int = Field(nullable=False, foreign_key="tb_categories.category_id")
-    dt_created: Optional[datetime] = Field(default=datetime.now())
-    dt_modified: Optional[datetime] = Field(default=datetime.now())
+    dt_created: datetime = Field(default=datetime.now())
+    dt_modified: datetime = Field(default=datetime.now())
     category: "Category" = Relationship(back_populates="routines")

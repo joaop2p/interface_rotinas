@@ -136,10 +136,10 @@ class HomeView(ViewTemplate):
             controls=[
                 CategoryLabels(
                     category=category,
-                    on_click=lambda e, c=category: self._filter_routines_by_category(c.category_id),
+                    on_click=lambda _, c=category: self._filter_routines_by_category(c.category_id),
                     width=100,
                     col={"xs": 6, "md": 4, "lg": 2},
-                    on_delete=lambda e, c=category: self._on_delete_category(c),
+                    on_delete=lambda _, c=category: self._on_delete_category(c),
                 ) for category in self._categories
             ],
         )
@@ -194,17 +194,17 @@ class HomeView(ViewTemplate):
                                             ft.PopupMenuItem(
                                                 text="Adicionar Categoria",
                                                 icon=ft.Icons.NEW_LABEL,
-                                                on_click=lambda e: self._go_to("/add_category")
+                                                on_click=lambda _: self._go_to("/add_category")
                                             ),
                                             ft.PopupMenuItem(
                                                 text="Adicionar Rotina",
                                                 icon=ft.Icons.PLAYLIST_ADD,
-                                                on_click=lambda e: self._go_to("/add_routine")
+                                                on_click=lambda _: self._go_to("/add_routine")
                                             ),
                                             ft.PopupMenuItem(
                                                 text="Detalhes das Rotinas",
                                                 icon=ft.Icons.INFO,
-                                                on_click=lambda e: self._go_to("/routine_details")
+                                                on_click=lambda _: self._go_to("/routine_details")
                                             )
                                         ]
                                     )

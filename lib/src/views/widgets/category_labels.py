@@ -18,7 +18,7 @@ class CategoryLabels(Container):
         control = self.content.controls[0].content
         if not isinstance(control, Row):
             raise TypeError("Expected Container content to be a Row")
-        control = control.controls[1]  # Assuming the second control is the Text
+        control = control.controls[1]
         if control is None or not isinstance(control, Text):
             return
         control.style = TextStyle(weight=FontWeight.BOLD if selected else FontWeight.NORMAL)

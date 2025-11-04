@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal, Optional, Callable
 import flet as ft
 from os.path import isfile, exists
 from lib.src.models.db.models import Routine
@@ -15,7 +15,7 @@ class DetailsView(ft.Container):
     _file_picker: ft.FilePicker
     _page: Optional[ft.Page]
 
-    def __init__(self, routine: Optional[Routine] = None, mode: Literal["view", "edit"] = "view", on_save: Optional[callable] = None, **kwargs):
+    def __init__(self, routine: Optional[Routine] = None, mode: Literal["view", "edit"] = "view", on_save: Optional[Callable] = None, **kwargs):
         super().__init__(**kwargs)
         self._state = mode
         self._page = None
@@ -74,14 +74,12 @@ class DetailsView(ft.Container):
 
     def _validate_inputs(self) -> bool:
         fields = [
-            self._name_field_ref,
-            self._description_field_ref,
-            self._directory_path_field_ref]
+            self._name_field_ref, self._description_field_ref, self._directory_path_field_ref
+            ]
         for field in fields:
-            if field.current is None or not field.current.value.strip():
-                if field.current is not None:
-                    field.current.error_text = "Este campo não pode estar vazio."
-                    field.current.update()
+            if field.current.value is None or not field.current.value.strip():
+                field.current.error_text = "Este campo não pode estar vazio."
+                field.current.update()
                 return False
         return True
 
@@ -110,8 +108,8 @@ class DetailsView(ft.Container):
         if self._file_picker:
             self._file_picker.pick_files(
                 allow_multiple=False,
-                allowed_extensions=AppConstants.EXTENSION_SUPPORTED,
-                dialog_title=AppConstants.WINDOW_TITLE
+                allowed_extensions=AppConstants.PYTHON_EXTENSIONS,
+                dialog_title=AppConstants.FILE_PICKER_TITLE
             )
 
     def _build_content(self):

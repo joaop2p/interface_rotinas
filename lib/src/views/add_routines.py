@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Iterable
+from typing import Iterable, TypeGuard
 import flet as ft
 from lib.src.controllers.routines import RoutinesController
 from lib.src.controllers.category import CategoryController, Category
@@ -12,7 +12,7 @@ class AddRoutinesView:
     _dropdown_ref: ft.Ref[ft.Dropdown]
     _categories: Iterable[Category]
     _label_selected_file_ref: ft.Ref[ft.Text]
-    _selected_file: ft.FilePicker | None
+    # _selected_file: ft.FilePickerFileType | None
     _name_field_ref: ft.Ref[ft.TextField]
     _description_field_ref: ft.Ref[ft.TextField]
     _category_selected: Category | None
@@ -40,8 +40,7 @@ class AddRoutinesView:
 
     @property
     def _get_category(self) -> None | Category:
-        if self._dropdown_ref.current is None:
-            logging.error("Dropdown não está inicializado.")
+        if not self._dropdown_ref.current.value:
             return
         return self._category_index.get(self._dropdown_ref.current.value)
 
@@ -66,55 +65,51 @@ class AddRoutinesView:
                 label.update()
 
     def _reset_form(self):
-        self._name_field_ref.current.value = ""
-        self._name_field_ref.current.error_text = None
-        self._name_field_ref.current.update()
-        self._description_field_ref.current.value = ""
-        self._description_field_ref.current.error_text = None
-        self._description_field_ref.current.update()
-        if self._dropdown_ref.current is not None:
-            self._dropdown_ref.current.value = None
-            self._dropdown_ref.current.update()
         self._selected_file = None
-        label = self._label_selected_file_ref.current
-        if label is not None:
-            label.value = "Script selecionado: Nenhum"
-            label.update()
+        fields: list[ft.Ref[ft.TextField] | ft.Ref[ft.Dropdown] | ft.Ref[ft.Text]] = [
+            self._name_field_ref, self._description_field_ref, self._dropdown_ref, self._label_selected_file_ref
+            ]
+        for field in fields:
+            field.current.value = None
+            if not isinstance(field.current, ft.Text):
+                field.current.error_text = None
+            else:
+                field.current.value = "Script selecionado: Nenhum"
+            field.current.update()
+
+    def _show_error(self, message: str) -> None:
+        """Helper para mostrar mensagens de erro"""
+        snack_bar = ft.SnackBar(
+            ft.Text(message, color=ft.Colors.WHITE),
+            bgcolor=ft.Colors.RED,
+        )
+        self._page.open(snack_bar)
 
     def _validate_inputs(self) -> bool:
+        """Valida se todos os campos são válidos"""
         fields = [self._name_field_ref, self._description_field_ref]
         for field in fields:
-            if field.current is None or not field.current.value.strip():
-                if field.current is not None:
-                    field.current.error_text = "Este campo não pode estar vazio."
-                    field.current.update()
-                    return False
+            if field.current.value is None or not field.current.value.strip():
+                field.current.error_text = "Este campo não pode estar vazio."
+                field.current.update()
+                return False
+                
         if self._dropdown_ref.current is None or self._dropdown_ref.current.value is None:
-            snack_bar = ft.SnackBar(
-                ft.Text(
-                    "Por favor, selecione uma categoria para a rotina.",
-                    color=ft.Colors.WHITE
-                ),
-                bgcolor=ft.Colors.RED,
-            )
-            self._page.open(snack_bar)
+            self._show_error("Por favor, selecione uma categoria para a rotina.")
             return False
-        elif self._selected_file is None:
-            snack_bar = ft.SnackBar(
-                ft.Text(
-                    "Por favor, selecione um script python para a rotina.",
-                    color=ft.Colors.WHITE
-                ),
-                bgcolor=ft.Colors.RED,
-            )
-            self._page.open(snack_bar)
+            
+        if self._selected_file is None:
+            self._show_error("Por favor, selecione um script python para a rotina.")
             return False
         return True
     
     def _save_routine(self) -> None:
         if not self._validate_inputs():
             return
-        # Lógica para salvar a rotina
+        assert self._selected_file is not None, "Validação deveria garantir arquivo selecionado"
+        assert self._get_category is not None, "Validação deveria garantir categoria selecionada"
+        assert self._name_field_ref.current.value, "Validação deveria garantir nome preenchido"
+        assert self._description_field_ref.current.value, "Validação deveria garantir descrição preenchida"
         try:
             logging.info("Salvando rotina:")
             logging.info(f"Nome: {self._name_field_ref.current.value}")
@@ -177,17 +172,17 @@ class AddRoutinesView:
                                     ft.OutlinedButton(
                                         "Selecionar script python", 
                                         icon=ft.Icons.ATTACH_FILE,
-                                        on_click=lambda e: picker.pick_files(
+                                        on_click=lambda _: picker.pick_files(
                                             allow_multiple=False,
-                                            allowed_extensions=AppConstants.EXTENSION_SUPPORTED,
-                                            dialog_title=AppConstants.WINDOW_TITLE
+                                            allowed_extensions=AppConstants.PYTHON_EXTENSIONS,
+                                            dialog_title=AppConstants.FILE_PICKER_TITLE
                                         )
                                     ),
                                     ft.Text("Script selecionado: Nenhum", ref=self._label_selected_file_ref),
                                 ]
                             ),
 
-                            ft.ElevatedButton("Salvar Rotina", on_click=lambda e: self._save_routine())
+                            ft.ElevatedButton("Salvar Rotina", on_click=lambda _: self._save_routine())
                         ]
                     )
                 )

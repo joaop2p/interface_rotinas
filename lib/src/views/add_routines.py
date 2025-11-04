@@ -4,7 +4,7 @@ from typing import Iterable
 import flet as ft
 from lib.src.controllers.routines import RoutinesController
 from lib.src.controllers.category import CategoryController, Category
-from lib.config import ConfigDefaults
+from lib.config import AppConstants
 
 class AddRoutinesView:
     _title = "Adicionar Rotina"
@@ -19,7 +19,6 @@ class AddRoutinesView:
     _category_index: dict[str, Category]
 
     def __init__(self):
-        self._page = None
         self._dropdown_ref = ft.Ref[ft.Dropdown]()
         self._categories = []
         self._selected_file = None
@@ -180,8 +179,8 @@ class AddRoutinesView:
                                         icon=ft.Icons.ATTACH_FILE,
                                         on_click=lambda e: picker.pick_files(
                                             allow_multiple=False,
-                                            allowed_extensions=ConfigDefaults.EXTENSION_SUPPORTED,
-                                            dialog_title=ConfigDefaults.WINDOW_TITLE
+                                            allowed_extensions=AppConstants.EXTENSION_SUPPORTED,
+                                            dialog_title=AppConstants.WINDOW_TITLE
                                         )
                                     ),
                                     ft.Text("Script selecionado: Nenhum", ref=self._label_selected_file_ref),

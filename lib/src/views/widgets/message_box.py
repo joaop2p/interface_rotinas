@@ -1,11 +1,11 @@
 import flet as ft
 
-from lib.config import Config
+from lib.config import get_logger
 from lib.src.controllers.script import ScriptController
 
 class MessageBox(ft.AlertDialog):
     _script_controller: ScriptController = ScriptController()
-    log = Config.get_instance().logger
+    log = get_logger("MessageBox")
 
     def _run(self, script: str) -> None:
         try:
@@ -24,6 +24,8 @@ class MessageBox(ft.AlertDialog):
                 ),
                 bgcolor=ft.Colors.RED,
             )
+            if self.page is None:
+                raise RuntimeError("Página não está disponível para exibir o SnackBar.")
             self.page.open(snack_bar)
 
     def __init__(self, title: str, dsc: str, script: str) -> None:

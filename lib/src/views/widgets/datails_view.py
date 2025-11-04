@@ -2,7 +2,7 @@ from typing import Literal, Optional
 import flet as ft
 from os.path import isfile, exists
 from lib.src.models.db.models import Routine
-from lib.config import ConfigDefaults
+from lib.config import AppConstants
 
 class DetailsView(ft.Container):
     _name_field_ref: ft.Ref[ft.TextField]
@@ -110,8 +110,8 @@ class DetailsView(ft.Container):
         if self._file_picker:
             self._file_picker.pick_files(
                 allow_multiple=False,
-                allowed_extensions=ConfigDefaults.EXTENSION_SUPPORTED,
-                dialog_title=ConfigDefaults.WINDOW_TITLE
+                allowed_extensions=AppConstants.EXTENSION_SUPPORTED,
+                dialog_title=AppConstants.WINDOW_TITLE
             )
 
     def _build_content(self):

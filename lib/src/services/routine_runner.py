@@ -3,11 +3,11 @@ import subprocess
 import os
 from re import compile
 from typing import Callable, Sequence, Optional
-from lib.config.settings import Config
+from lib.config import get_logger
 
 class RoutineRunner:
     def __init__(self) -> None:
-        self._logger = Config.get_instance().logger
+        self._logger = get_logger("RoutineRunner")
         self._progress_pattern = compile(r'\d+(?:\.\d+)?%')
 
     def run(

@@ -2,7 +2,7 @@ import asyncio
 import logging
 import concurrent.futures
 from typing import Iterable
-from lib.config import Config, ConfigDefaults
+from lib.config import LoggerConfig, AppConstants
 from lib.src.controllers.routines import RoutinesController
 from lib.src.controllers.category import CategoryController, CategoryInUseError
 from lib.src.models.db.models import Category, Routine
@@ -15,7 +15,7 @@ class HomeView(ViewTemplate):
     _route = "/home"
     _routines: Iterable[Routine]
     _categories: Iterable[Category]
-    _config: Config
+    _config: LoggerConfig
     _current_filter: int | None
     _load_task: asyncio.Task | None
     _grid_ref: ft.Ref[ft.GridView]
@@ -27,7 +27,7 @@ class HomeView(ViewTemplate):
 
     def __init__(self, ):
         self._current_filter = None
-        self._config = Config()
+        self._config = LoggerConfig()
         self._logger = logging.getLogger("HomeView")
         self._load_task = None
         self._routines = []
@@ -60,7 +60,7 @@ class HomeView(ViewTemplate):
                     )
                 )
         else:
-            if len(lv.controls) >= ConfigDefaults.TERMINAL_LIMIT:
+            if len(lv.controls) >= AppConstants.TERMINAL_LIMIT:
                 lv.controls.pop(0)
             lv.controls.append(ft.Text(log, style=ft.TextThemeStyle.LABEL_MEDIUM, selectable=True, color="#FFFFFF"))
         lv.update()
@@ -73,17 +73,15 @@ class HomeView(ViewTemplate):
             self._page.run_task(self._switch_to_main_content)
         except CategoryInUseError as e:
             self._logger.warning("Tentativa de deletar categoria em uso: %s", e)
-            self._update_terminal(f"Erro ao deletar categoria: {e}")
         except Exception as e:
             self._logger.exception("Erro ao deletar categoria: %s", e)
     async def _monitor_logs(self) -> None:
         last_length = 0
         while True:
-            await asyncio.sleep(ConfigDefaults.TERMINAL_UPDATE_INTERVAL)
+            await asyncio.sleep(AppConstants.TERMINAL_UPDATE_INTERVAL)
             if len(self._config.log_capture.logs) != last_length and self._terminal_reference.current is not None:
                 last_length = len(self._config.log_capture.logs)
                 log = self._config.log_capture.get_log()
-                self._update_terminal(log)
                 self._update_terminal(log)
 
     def _mark_label_as_selected(self, category_id: int) -> None:
@@ -117,7 +115,6 @@ class HomeView(ViewTemplate):
             self._logger.info(f"Categorias carregadas: %d", len(self._categories))
         except Exception as e:
             self._logger.exception("Erro ao carregar categorias: %s", e)
-            self._update_terminal(f"Erro ao carregar categorias: {e}")
         try:
             routines_controller = RoutinesController()
             self._routines = routines_controller.get_all_routines()
@@ -125,7 +122,6 @@ class HomeView(ViewTemplate):
         except Exception as e:
             self._logger.exception("Erro ao carregar rotinas: %s", e)
             self._routines = []
-            self._update_terminal(f"Erro ao carregar rotinas: {e}")
 
     def _get_categories_menu(self):
         if not self._categories:

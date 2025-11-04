@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from flet import Page, View
 
 class ViewTemplate(ABC):
-    _page: Page | None
+    _page: Page
     _title: str
     _route: str
 

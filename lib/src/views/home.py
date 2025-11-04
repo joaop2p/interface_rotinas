@@ -26,7 +26,6 @@ class HomeView(ViewTemplate):
     _logger: logging.Logger
 
     def __init__(self, ):
-        self._page = None
         self._current_filter = None
         self._config = Config()
         self._logger = logging.getLogger("HomeView")

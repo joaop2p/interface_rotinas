@@ -40,6 +40,10 @@ class RoutinesDetailsView(ViewTemplate):
         self._main_content_ref.current.update()
         #TODO: Implementar deletar rotinas a partir do Dismissible
 
+    def _go_back(self):
+        if self._page is not None:
+            self._page.go('/home')
+
     def set_page(self, page):
         self._page = page
 
@@ -53,7 +57,7 @@ class RoutinesDetailsView(ViewTemplate):
                 title=ft.Text(self._title),
                 leading=ft.IconButton(
                     icon=ft.Icons.ARROW_BACK,
-                    on_click=lambda _: self._page.go("/home")
+                    on_click=lambda _: self._go_back()
                 )
             ),
             controls=[

@@ -1,6 +1,7 @@
 from flet import Container, Icon, Row, Text, Animation, AnimationCurve, ControlEvent, FontWeight, TextStyle, Icons, MainAxisAlignment
 from lib.src.models.db.models import Category
 from lib.src.views.widgets.message_box import MessageBox
+from typing import Callable
 
 class CategoryLabels(Container):
     category: Category
@@ -12,14 +13,18 @@ class CategoryLabels(Container):
     def set_selected(self, selected: bool) -> None:
         if self.content is None or not isinstance(self.content, Row):
             return
-        control = self.content.controls[0].content.controls[1]
+        if not isinstance(self.content.controls[0], Container):
+            raise TypeError("Expected first control to be a Container")
+        control = self.content.controls[0].content
+        if not isinstance(control, Row):
+            raise TypeError("Expected Container content to be a Row")
+        control = control.controls[1]  # Assuming the second control is the Text
         if control is None or not isinstance(control, Text):
             return
         control.style = TextStyle(weight=FontWeight.BOLD if selected else FontWeight.NORMAL)
         control.update()
 
-
-    def __init__(self, category: Category, on_delete: callable = None, **kwargs):
+    def __init__(self, category: Category, on_delete: Callable | None = None, **kwargs):
         super().__init__(**kwargs)
         self.category = category
         self.animate_scale = Animation(duration=300, curve=AnimationCurve.EASE_IN_OUT_QUAD)
@@ -34,7 +39,7 @@ class CategoryLabels(Container):
                             Icon(name=category.icon, size=20),
                             Text(category.category_name, style=TextStyle(size=14)),
                         ],
-                        alignment="center",
+                        alignment=MainAxisAlignment.CENTER,
                         spacing=8,
                     )
                 ),

@@ -5,6 +5,7 @@ from lib.src.views.widgets.datails_view import DetailsView
 from lib.src.models.interfaces.view_template import ViewTemplate
 from lib.src.controllers.category import CategoryController
 from lib.src.controllers.routines import RoutinesController
+from lib.config import AppConstants
 import flet as ft
 
 class RoutinesDetailsView(ViewTemplate):
@@ -16,7 +17,6 @@ class RoutinesDetailsView(ViewTemplate):
     _routines_controller: RoutinesController
     
     def __init__(self):
-        self._page = None
         self._logger = logging.getLogger("RoutinesDetailsView")
         self._right_side_menu_ref = ft.Ref[ft.Container]()
         self._main_content_ref = ft.Ref[ft.Container]()
@@ -56,7 +56,6 @@ class RoutinesDetailsView(ViewTemplate):
             self._logger.info(f"Categorias carregadas: %d", len(self._categories))
         except Exception as e:
             self._logger.exception("Erro ao carregar categorias: %s", e)
-            # self._update_terminal(f"Erro ao carregar categorias: {e}")
         try:
             self._routines_controller = RoutinesController()
             self._routines = self._routines_controller.get_all_routines()
@@ -64,20 +63,46 @@ class RoutinesDetailsView(ViewTemplate):
         except Exception as e:
             self._logger.exception("Erro ao carregar rotinas: %s", e)
             self._routines = []
-            # self._update_terminal(f"Erro ao carregar rotinas: {e}")
 
-    def _on_save(self):
+    def _on_save(self) -> None:
+        """Salva as alterações da rotina com validação completa"""
         self._logger.info("Salvando alterações na rotina...")
-        if self._main_content_ref.current is None:
-            self._logger.error("Main content container não está inicializado.")
+        
+        if not self._main_content_ref.current:
+            self._show_error("Container principal não inicializado")
             return
         
-        self._routines_controller.insert_routine(
-            name=self._main_content_ref.current.content._name_field_ref.current.value,
-            desc=self._main_content_ref.current.content._description_field_ref.current.value,
-            directory_path=self._main_content_ref.current.content._directory_path_field_ref.current.value,
-            category_id=self._main_content_ref.current.content._routine.category_id,
-        )
+        main_content = self._main_content_ref.current.content
+        if not isinstance(main_content, DetailsView):
+            self._show_error("Conteúdo principal inválido")
+            return
+        
+        form_data = self._extract_form_data(main_content)
+        if not form_data:
+            return
+        
+        name, description, directory_path, category_id = form_data
+        
+        try:
+            # Operação de salvamento
+            self._routines_controller.update_routine(
+                routine_id=main_content.routine.routine_id,
+                name=name,
+                description=description,
+                directory_path=directory_path,
+                category_id=category_id
+            )
+            
+            self._show_success("Rotina atualizada com sucesso!")
+            self._logger.info(f"Rotina '{name}' salva com sucesso")
+            
+            # Volta para modo visualização
+            self._update_main_content(main_content.routine, mode="view")
+            
+        except Exception as e:
+            error_msg = f"Erro ao salvar rotina: {e}"
+            self._show_error(error_msg)
+            self._logger.exception("Erro ao salvar rotina: %s", e)
 
     def _update_main_content(self, routine: Routine, mode: Literal["view", "edit"] = "view"):
         match mode:
@@ -95,7 +120,7 @@ class RoutinesDetailsView(ViewTemplate):
                 details_view = DetailsView(
                     routine=routine, 
                     mode="edit", 
-                    on_pick=lambda e: print(f"Arquivo selecionado no modo editar: {e}")
+                    on_click=lambda e: print(f"Arquivo selecionado no modo editar: {e}")
                 )
                 self._main_content_ref.current.content = details_view
                 details_view.set_page(self._page)
@@ -214,3 +239,69 @@ class RoutinesDetailsView(ViewTemplate):
                 ),
             ]
         )
+
+    def _extract_form_data(self, details_view: DetailsView) -> tuple[str, str, str, int] | None:
+        """Extrai e valida dados do formulário"""
+        try:
+            name = details_view.name_field.value
+            description = details_view.description_field.value  
+            directory_path = details_view.directory_path_field.value
+            category_id = details_view.routine.category_id
+            
+            # Validação de campos obrigatórios
+            if not name or not name.strip():
+                self._show_error("Nome da rotina é obrigatório")
+                return None
+                
+            if not description or not description.strip():
+                self._show_error("Descrição da rotina é obrigatória")
+                return None
+                
+            if not directory_path or not directory_path.strip():
+                self._show_error("Caminho do diretório é obrigatório")
+                return None
+                
+            if not category_id:
+                self._show_error("Categoria é obrigatória")
+                return None
+            
+            return name.strip(), description.strip(), directory_path.strip(), category_id
+            
+        except AttributeError as e:
+            self._show_error("Erro ao acessar campos do formulário")
+            self._logger.error(f"Erro de atributo ao extrair dados: {e}")
+            return None
+
+    def _show_error(self, message: str) -> None:
+        """Mostra mensagem de erro ao usuário"""
+        if self._page:
+            snack_bar = ft.SnackBar(
+                ft.Text(message, color=ft.Colors.WHITE),
+                bgcolor=ft.Colors.RED,
+            )
+            self._page.open(snack_bar)
+        self._logger.error(message)
+
+    def _show_success(self, message: str) -> None:
+        """Mostra mensagem de sucesso ao usuário"""
+        if self._page:
+            snack_bar = ft.SnackBar(
+                ft.Text(message, color=ft.Colors.WHITE),
+                bgcolor=ft.Colors.GREEN,
+            )
+            self._page.open(snack_bar)
+        self._logger.info(message)
+
+    def _validate_file_path(self, path: str) -> bool:
+        """Valida se o caminho do arquivo existe e é válido"""
+        import os
+        
+        if not os.path.exists(path):
+            self._show_error(f"Arquivo não encontrado: {path}")
+            return False
+            
+        if not path.endswith(tuple(AppConstants.PYTHON_EXTENSIONS)):
+            self._show_error("Arquivo deve ser um script Python válido")
+            return False
+        
+        return True

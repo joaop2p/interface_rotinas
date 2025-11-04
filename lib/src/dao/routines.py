@@ -12,13 +12,15 @@ class RoutinesDAO:
         with Session(self._db_config.get_engine) as session:
             statement = select(Routine).options(joinedload(cast(Any, Routine.category)))
             result = session.exec(statement)
-            return result.all()
-        
-    def get_by_category_id(self, category_id: int) -> Sequence[Routine]:
+            routines = result.unique().all()
+            return routines
+
+    def get_by_id(self, category_id: int) -> Routine | None:
         with Session(self._db_config.get_engine) as session:
             statement = select(Routine).where(Routine.category_id == category_id).options(joinedload(cast(Any, Routine.category)))
             result = session.exec(statement)
-            return result.all()
+            routine = result.first()
+            return routine
 
     def insert_routine(self, routine: Routine) -> Routine:
         with Session(self._db_config.get_engine) as session:
@@ -26,7 +28,14 @@ class RoutinesDAO:
             session.commit()
             session.refresh(routine)
             return routine
-        
+
+    def update_routine(self, routine: Routine) -> Routine:
+        with Session(self._db_config.get_engine) as session:
+            merged_routine = session.merge(routine)
+            session.commit()
+            session.refresh(merged_routine)
+            return merged_routine
+
     def delete_routine(self, routine: Routine) -> None:
         with Session(self._db_config.get_engine) as session:
             session.delete(routine)

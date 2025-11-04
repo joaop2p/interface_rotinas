@@ -1,6 +1,7 @@
 from typing import Literal, Optional, Callable
 import flet as ft
 from os.path import isfile, exists
+from lib.src.controllers.category import CategoryController
 from lib.src.models.db.models import Routine
 from lib.config import AppConstants
 
@@ -50,13 +51,13 @@ class DetailsView(ft.Container):
             if self._directory_path_field_ref.current:
                 self._directory_path_field_ref.current.value = selected_file.path
                 self._directory_path_field_ref.current.update()
-                # Validar o arquivo selecionado
                 self._check_path_exists_direct(selected_file.path)
 
     def _init_fields(self):
         self._name_field_ref = ft.Ref[ft.TextField]()
         self._description_field_ref = ft.Ref[ft.TextField]()
         self._directory_path_field_ref = ft.Ref[ft.TextField]()
+        self._category_field_ref = ft.Ref[ft.Dropdown]()
         self._save_button_ref = ft.Ref[ft.Container]()
         self._select_file_ref = ft.Ref[ft.IconButton]()
 
@@ -65,10 +66,11 @@ class DetailsView(ft.Container):
         fields = [
             self._name_field_ref,
             self._description_field_ref,
-            self._directory_path_field_ref]
+            self._directory_path_field_ref,
+            self._category_field_ref]
         for field in fields:
             if field.current:
-                field.current.read_only = False
+                field.current.disabled = False
         self._select_file_ref.current.visible = True
         self._save_button_ref.current.visible = True
 
@@ -97,7 +99,10 @@ class DetailsView(ft.Container):
         print(f"Verificando existência do caminho: {path}")
         if exists(path):
             if isfile(path):
-                field.error_text = None
+                if path.endswith(tuple(AppConstants.PYTHON_EXTENSIONS)):
+                    field.error_text = None
+                else:
+                    field.error_text = "O caminho não é um arquivo Python válido."
             else:
                 field.error_text = "O caminho não é um arquivo válido."
         else:
@@ -114,6 +119,11 @@ class DetailsView(ft.Container):
 
     def _build_content(self):
         self._init_fields()
+        category_controller = CategoryController()
+        category_options = [
+            ft.dropdown.Option(str(icon.icon), icon.category_name)
+            for icon in category_controller.get_all_categories()
+        ]
         return ft.Column(
             controls=[
                 ft.ResponsiveRow(
@@ -124,21 +134,30 @@ class DetailsView(ft.Container):
                             ref=self._name_field_ref,
                             label="Nome da Rotina",
                             value=self._routine.routine_name,
-                            read_only=True,
+                            disabled=True,
                             expand=True,
-                            col={"xs": 10, "md": 8, "lg": 4}
+                            col={"xs": 12, "md": 6, "lg": 3}
+                        ),
+                        ft.Dropdown(
+                            label="Categoria",
+                            value=str(self._routine.category.icon),
+                            disabled=True,
+                            ref=self._category_field_ref,
+                            expand=True,
+                            options=category_options,
+                            col={"xs": 12, "md": 6, "lg": 3}
                         ),
                         ft.TextField(
                             ref=self._description_field_ref,
                             label="Descrição",
                             value=self._routine.description or "",
-                            read_only=True,
+                            disabled=True,
                             expand=True,
                             multiline=True,
-                            col={"xs": 10, "md": 8, "lg": 4}
+                            col={"xs": 12, "md": 6, "lg": 3}
                         ),
                         ft.Container(
-                            col={"xs": 10, "md": 8, "lg": 4},
+                            col={"xs": 12, "md": 6, "lg": 3},
                             content=ft.Row(
                                 controls=[
                                     ft.TextField(
@@ -146,7 +165,7 @@ class DetailsView(ft.Container):
                                         label="Caminho do Diretório",
                                         value=self._routine.directory_path,
                                         on_change=self._check_path_exists,
-                                        read_only=True,
+                                        disabled=True,
                                         expand=True,
                                     ),
                                     ft.IconButton(
@@ -159,7 +178,6 @@ class DetailsView(ft.Container):
                                 ]
                             )
                         ),
-                        #TODO: adicionar campo categoria
                         ft.Text(
                             f"Data de Criação: {self._routine.dt_created.strftime('%d/%m/%Y %H:%M:%S')}",
                             theme_style=ft.TextThemeStyle.BODY_MEDIUM
@@ -186,3 +204,16 @@ class DetailsView(ft.Container):
                 )
             ]
         )
+    
+    @property
+    def routine(self) -> Routine:
+        return self._routine
+    @property
+    def name_field(self) -> ft.TextField:
+        return self._name_field_ref.current
+    @property
+    def description_field(self) -> ft.TextField:
+        return self._description_field_ref.current
+    @property
+    def directory_path_field(self) -> ft.TextField:
+        return self._directory_path_field_ref.current

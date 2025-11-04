@@ -157,6 +157,8 @@ class HomeView(ViewTemplate):
 
     async def _switch_to_main_content(self):
         await self._load_data_async()
+        while self._list_label_references.current is None or self._main_content_ref.current is None:
+            await asyncio.sleep(0.1)
         self._list_label_references.current.content = self._get_categories_menu()
         self._main_content_ref.current.content = self._get_routines_grid()
         self._list_label_references.current.update()

@@ -57,7 +57,7 @@ class AddRoutinesView:
             ]
             self._dropdown_ref.current.update()
 
-    def _show_picker(self, e: ft.FilePickerResultEvent):
+    def _validate_picker(self, e: ft.FilePickerResultEvent):
         if e.files:
             self._selected_file = e.files[0]
             logging.info(f"Arquivo selecionado: {self._selected_file.path}")
@@ -155,7 +155,7 @@ class AddRoutinesView:
         if self._page is None:
             raise ValueError("Page is not set for AddRoutineView.")
         self._page.run_task(self._att_menu)
-        picker = ft.FilePicker(on_result=self._show_picker)
+        picker = ft.FilePicker(on_result=self._validate_picker)
         self._page.overlay.append(picker)
         return ft.View(
             route=self._route,

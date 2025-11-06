@@ -7,14 +7,19 @@ from collections import deque
 from . import AppConstants
 
 class InMemoryLogHandler(Handler):
+    DEFAULT_DECODE_ENCODING = "utf-8"
+
     def __init__(self, max_logs: int = 1000) -> None:
         super().__init__()
         self.logs: deque[str] = deque(maxlen=max_logs)
-        self.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+        self.setFormatter(logging.Formatter(fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%d-%m-%Y %H:%M:%S"))
 
     def emit(self, record: LogRecord) -> None:
         try:
-            self.logs.append(self.format(record))
+            log_message = self.format(record)
+            if isinstance(log_message, bytes):
+                log_message = log_message.decode(self.DEFAULT_DECODE_ENCODING)
+            self.logs.append(log_message)
         except Exception:
             self.handleError(record)
 
@@ -55,11 +60,16 @@ class LoggerConfig:
         root.setLevel(log_level)
         root.handlers.clear()
         root.addHandler(self.log_capture)
-        
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(
             logging.Formatter("%(levelname)s - %(name)s - %(message)s")
         )
+        reconfig = getattr(sys.stdout, "reconfigure", None)
+        if callable(reconfig):
+            try:
+                reconfig(encoding=self.log_capture.DEFAULT_DECODE_ENCODING)
+            except Exception:
+                pass
         root.addHandler(console_handler)
         self.logger = root
 

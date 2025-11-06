@@ -1,84 +1,101 @@
-# Gerenciador de Rotinas - AI Coding Instructions
+# Gerenciador de Rotinas - Instruções para IA
 
-## Architecture Overview
+## Contexto
 
-This is a Python desktop application built with **Flet** for GUI and **SQLModel** for database operations. The app manages and executes Python scripts (routines) organized by categories.
+Esta aplicação é um **gerenciador de scripts Python** desenvolvido para organizar e executar rotinas de automação de forma visual e centralizada. O objetivo principal é permitir que usuários categorizem seus scripts, executem-nos através de uma interface gráfica amigável e monitorem a saída em tempo real.
 
-### Core Components
+### Propósito
+- **Organização**: Scripts organizados por categorias personalizáveis com ícones
+- **Execução Simplificada**: Interface gráfica para executar scripts sem linha de comando
+- **Monitoramento**: Terminal integrado com logs em tempo real da execução
+- **Gestão**: CRUD completo de categorias e rotinas com validações
 
-- **Entry Point**: `main.py` → `lib/app/myapp.py` → `PageManager` (singleton pattern)
-- **Routing**: `PageManager` handles SPA-style navigation with `Routes` constants
-- **Views**: All inherit from `ViewTemplate` abstract base with `get_view()` and `set_page()` methods
-- **Data Layer**: Controller → Service → DAO pattern with SQLModel/SQLite
-- **Database**: SQLite with foreign keys enabled, auto-created triggers for `dt_modified`
+### Público-Alvo
+Desenvolvedores e usuários técnicos que possuem múltiplos scripts Python para tarefas diversas (automação, análise de dados, utilitários, etc.) e desejam uma forma organizada de gerenciá-los.
 
-### Database Models & Relationships
+### Arquitetura de Deploy
+Aplicação desktop standalone para Windows que armazena dados localmente no `AppData` do usuário, sem dependências externas além do Python e suas bibliotecas.
+
+## Visão Geral da Arquitetura
+
+Esta é uma aplicação desktop Python construída com **Flet** para interface gráfica e **SQLModel** para operações de banco de dados. O app gerencia e executa scripts Python (rotinas) organizados por categorias.
+
+### Componentes Principais
+
+- **Ponto de Entrada**: `main.py` → `lib/app/myapp.py` → `PageManager` (padrão singleton)
+- **Roteamento**: `PageManager` gerencia navegação SPA com constantes `Routes`
+- **Views**: Todas herdam de `ViewTemplate` com métodos `get_view()` e `set_page()`
+- **Camada de Dados**: Padrão Controller → Service → DAO com SQLModel/SQLite
+- **Banco de Dados**: SQLite com chaves estrangeiras habilitadas, triggers automáticos para `dt_modified`
+- **Terminal de Logs**: `InMemoryLogHandler` captura logs em tempo real para exibição na UI
+
+### Modelos e Relacionamentos do Banco
 
 ```python
-# One-to-many: Category → Routines
+# Um-para-muitos: Category → Routines
 Category: category_id (PK), category_name (unique), icon
 Routine: routine_id (PK), routine_name, directory_path, description, category_id (FK), dt_created, dt_modified
 ```
 
-## Critical Patterns
+## Padrões Críticos
 
-### 1. View Lifecycle
-- Views use **async loading** with `_page.run_task()` for data operations
-- All views must call `set_page()` before `get_view()`
-- Use `ft.Ref[ComponentType]()` for dynamic content updates
+### 1. Ciclo de Vida das Views
+- Views usam **carregamento assíncrono** com `_page.run_task()` para operações de dados
+- Todas as views devem chamar `set_page()` antes de `get_view()`
+- Use `ft.Ref[ComponentType]()` para atualizações dinâmicas de conteúdo
 
-### 2. Singleton Components
-- `DatabaseConfig`: Thread-safe database connection manager
-- `PageManager`: Handles all navigation and view state
-- `LoggerConfig`: Centralized logging with in-memory capture for UI terminal
+### 2. Componentes Singleton
+- `DatabaseConfig`: Gerenciador de conexão de banco thread-safe
+- `PageManager`: Gerencia toda navegação e estado das views
+- `LoggerConfig`: Logging centralizado com captura in-memory para terminal da UI
 
-### 3. Routine Execution
-Use `RoutineRunner` service for executing Python scripts:
+### 3. Execução de Rotinas
+Use o serviço `RoutineRunner` para executar scripts Python:
 ```python
 runner = RoutineRunner()
 runner.run(script_path, on_line=callback_func, hide_console=True)
 ```
 
-### 4. Real-time Log Display
-Views subscribe to logs via `InMemoryLogHandler` with terminal-like output:
+### 4. Exibição de Logs em Tempo Real
+Views se inscrevem em logs via `InMemoryLogHandler` com saída tipo terminal:
 ```python
 self._page.pubsub.subscribe(lambda m: self._update_terminal(m["text"]))
 ```
 
-## Development Commands
+## Comandos de Desenvolvimento
 
 ```powershell
-# Run application
+# Executar aplicação
 python main.py
 
-# Database is auto-created at: C:\users\{user}\AppData\Local\Scripts Hub\database\rotinas.sqlite
+# Banco é criado automaticamente em: C:\users\{user}\AppData\Local\Scripts Hub\database\rotinas.sqlite
 ```
 
-## File Organization Rules
+## Regras de Organização de Arquivos
 
-- **Controllers**: Thin validation layer, delegate to Services
-- **Services**: Business logic, coordinate between Controllers and DAOs  
-- **DAOs**: Direct database operations using SQLModel Sessions
-- **Views**: UI components in `views/` with reusable widgets in `views/widgets/`
-- **Models**: `db/models.py` for SQLModel tables, `interfaces/` for abstractions
+- **Controllers**: Camada fina de validação, delegam para Services
+- **Services**: Lógica de negócio, coordenam entre Controllers e DAOs
+- **DAOs**: Operações diretas de banco usando SQLModel Sessions
+- **Views**: Componentes de UI em `views/` com widgets reutilizáveis em `views/widgets/`
+- **Models**: `db/models.py` para tabelas SQLModel, `interfaces/` para abstrações
 
-## Key Conventions
+## Convenções Importantes
 
-1. **Error Handling**: Use specific exceptions (e.g., `CategoryInUseError`)
-2. **Logging**: All components get logger via `logging.getLogger(component_name)`
-3. **Constants**: Centralized in `AppConstants`, `SQLConstants`, `LogMessages`
-4. **Async Operations**: Use `asyncio.Task` for long-running operations in views
-5. **File Validation**: Scripts must have Python extensions from `AppConstants.PYTHON_EXTENSIONS`
+1. **Tratamento de Erros**: Use exceções específicas (ex: `CategoryInUseError`)
+2. **Logging**: Todos os componentes obtêm logger via `logging.getLogger(component_name)`
+3. **Constantes**: Centralizadas em `AppConstants`, `SQLConstants`, `LogMessages`
+4. **Operações Assíncronas**: Use `asyncio.Task` para operações longas nas views
+5. **Validação de Arquivos**: Scripts devem ter extensões Python de `AppConstants.PYTHON_EXTENSIONS`
 
-## Integration Points
+## Pontos de Integração
 
-- **Flet UI Framework**: All UI built with Flet components and async patterns
-- **SQLite Database**: Foreign keys enabled, automatic timestamp triggers
-- **File System**: Python script execution with real-time output capture
-- **Windows Integration**: Desktop app with local AppData storage
+- **Framework Flet**: Toda UI construída com componentes Flet e padrões assíncronos
+- **Banco SQLite**: Chaves estrangeiras habilitadas, triggers automáticos de timestamp
+- **Sistema de Arquivos**: Execução de scripts Python com captura de saída em tempo real
+- **Integração Windows**: App desktop com armazenamento local no AppData
 
-## Navigation Flow
+## Fluxo de Navegação
 
-Home (`/home`) → Add Category (`/add_category`) / Add Routine (`/add_routine`) / Routine Details (`/routine_details`)
+Home (`/home`) → Adicionar Categoria (`/add_category`) / Adicionar Rotina (`/add_routine`) / Detalhes da Rotina (`/routine_details`)
 
-Routes managed by `PageManager` singleton with dynamic view instantiation for forms.
+Rotas gerenciadas pelo singleton `PageManager` com instanciação dinâmica de views para formulários.
